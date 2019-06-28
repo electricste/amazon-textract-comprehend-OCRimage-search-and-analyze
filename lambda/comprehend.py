@@ -37,7 +37,7 @@ print('done')
 host= os.environ['esDomain']
 print("ES DOMAIN IS..........")
 
-region = 'us-east-1' # e.g. us-west-1
+region = 'us-west-2' #'us-east-1' # e.g. us-west-1
 service = 'es'
 credentials = boto3.Session().get_credentials()
 
@@ -103,6 +103,10 @@ def handler(event, context):
         KeyPhraseList=sentiment_response.get("KeyPhrases")
         for s in KeyPhraseList:
               textvalues.append(s.get("Text"))
+              
+        # Extracting Overall Sentiment
+        sentiment_score_response = comprehend.detect_sentiment(Text=text, LanguageCode='en')
+        sentiment_result=sentiment_score_response.get("Sentiment")
                     
         detect_entity= comprehend.detect_entities(Text=text, LanguageCode='en')
         EntityList=detect_entity.get("Entities")
@@ -110,7 +114,7 @@ def handler(event, context):
                 textvalues_entity.update([(s.get("Type").strip('\t\n\r'),s.get("Text").strip('\t\n\r'))])
 
         s3url= 'https://s3.console.aws.amazon.com/s3/object/'+bucket+'/'+key+'?region=us-east-1'
-        searchdata={'s3link':s3url,'KeyPhrases':textvalues,'Entity':textvalues_entity,'text':text}
+        searchdata={'s3link':s3url,'KeyPhrases':textvalues,'Entity':textvalues_entity,'text':text, 'sentiment':sentiment_result}
         print(searchdata)
         print("connecting to ES")
         es=connectES()
